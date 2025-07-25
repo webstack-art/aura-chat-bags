@@ -1,48 +1,34 @@
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Heart } from 'lucide-react';
-
-const bestSellers = [
-  {
-    id: 1,
-    name: 'Milano Luxury Tote',
-    price: '$299',
-    originalPrice: '$399',
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&h=600&fit=crop',
-    badge: 'Best Seller',
-    rating: 4.8,
-    reviews: 124
-  },
-  {
-    id: 2,
-    name: 'Parisian Crossbody',
-    price: '$199',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=600&fit=crop',
-    badge: 'New',
-    rating: 4.9,
-    reviews: 89
-  },
-  {
-    id: 3,
-    name: 'Venetian Evening Clutch',
-    price: '$159',
-    image: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=500&h=600&fit=crop',
-    badge: 'Limited',
-    rating: 4.7,
-    reviews: 67
-  },
-  {
-    id: 4,
-    name: 'London Shoulder Bag',
-    price: '$249',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=600&fit=crop',
-    rating: 4.6,
-    reviews: 92
-  }
-];
+import { MessageCircle, Heart, ShoppingCart } from 'lucide-react';
+import { getBestSellers } from '@/data/products';
+import { Link } from 'react-router-dom';
 
 const BestSellers = () => {
-  const handleWhatsAppClick = (product) => {
-    const message = `Hi! I'm interested in the ${product.name} (${product.price}). Can you provide more details?`;
+  const bestSellers = getBestSellers();
+
+  const handleAddToCart = (product) => {
+    const message = `Hi! I would like to add this item to my cart:
+
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+📦 Category: ${product.category.replace('-', ' ')}
+
+Please let me know about availability and how to proceed with the purchase.`;
+    
+    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleQuickBuy = (product) => {
+    const message = `Hi! I want to buy this product immediately:
+
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+
+Can you please help me complete the purchase?`;
+    
     const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -67,11 +53,13 @@ const BestSellers = () => {
             >
               {/* Image Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
+                <Link to={`/product/${product.id}`}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                </Link>
                 
                 {/* Badge */}
                 {product.badge && (
@@ -90,7 +78,7 @@ const BestSellers = () => {
                   <Button
                     variant="whatsapp"
                     size="sm"
-                    onClick={() => handleWhatsAppClick(product)}
+                    onClick={() => handleQuickBuy(product)}
                     className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -101,9 +89,13 @@ const BestSellers = () => {
 
               {/* Content */}
               <div className="p-6">
-                <h3 className="text-lg font-semibold mb-2 text-card-foreground group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
+                <Link to={`/product/${product.id}`}>
+                  <h3 className="text-lg font-semibold mb-2 text-card-foreground group-hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
+                </Link>
+                
+                <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
                 
                 {/* Rating */}
                 <div className="flex items-center mb-3">
@@ -133,23 +125,32 @@ const BestSellers = () => {
                   </div>
                 </div>
 
-                {/* WhatsApp Button */}
-                <Button
-                  variant="outline"
-                  className="w-full hover:bg-[#25D366] hover:border-[#25D366] hover:text-white transition-all duration-300"
-                  onClick={() => handleWhatsAppClick(product)}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Buy on WhatsApp
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add to Cart
+                  </Button>
+                  <Button
+                    variant="whatsapp"
+                    size="sm"
+                    onClick={() => handleQuickBuy(product)}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="luxury" size="lg" className="px-8">
-            View All Products
+          <Button variant="luxury" size="lg" className="px-8" asChild>
+            <Link to="/shop">View All Products</Link>
           </Button>
         </div>
       </div>

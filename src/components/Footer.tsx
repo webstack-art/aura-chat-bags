@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MessageCircle, Instagram, Facebook, Mail, Phone, MapPin, ShoppingBag } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -38,15 +39,24 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-accent">Quick Links</h3>
             <nav className="flex flex-col space-y-2">
-              {['Home', 'Shop', 'About Us', 'Contact', 'Size Guide', 'Care Instructions'].map((link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="text-primary-foreground/80 hover:text-accent transition-colors duration-300"
-                >
-                  {link}
-                </a>
-              ))}
+              <Link to="/" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Home
+              </Link>
+              <Link to="/shop" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Shop
+              </Link>
+              <Link to="/about" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                About Us
+              </Link>
+              <Link to="/contact" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Contact
+              </Link>
+              <Link to="/faq" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                FAQ
+              </Link>
+              <Link to="/support" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Support
+              </Link>
             </nav>
           </div>
 
@@ -54,15 +64,24 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-accent">Categories</h3>
             <nav className="flex flex-col space-y-2">
-              {['Tote Bags', 'Shoulder Bags', 'Crossbody', 'Clutches', 'Evening Bags', 'Travel Bags'].map((category) => (
-                <a
-                  key={category}
-                  href="#"
-                  className="text-primary-foreground/80 hover:text-accent transition-colors duration-300"
-                >
-                  {category}
-                </a>
-              ))}
+              <Link to="/category/tote-bags" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Tote Bags
+              </Link>
+              <Link to="/category/shoulder-bags" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Shoulder Bags
+              </Link>
+              <Link to="/category/crossbody" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Crossbody
+              </Link>
+              <Link to="/category/clutches" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Clutches
+              </Link>
+              <Link to="/category/evening-bags" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Evening Bags
+              </Link>
+              <Link to="/best-sellers" className="text-primary-foreground/80 hover:text-accent transition-colors duration-300">
+                Best Sellers
+              </Link>
             </nav>
           </div>
 
@@ -110,15 +129,15 @@ const Footer = () => {
             </p>
             
             <div className="flex space-x-6 text-sm">
-              <a href="#" className="text-primary-foreground/80 hover:text-accent transition-colors">
+              <Link to="/privacy-policy" className="text-primary-foreground/80 hover:text-accent transition-colors">
                 Privacy Policy
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-accent transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-accent transition-colors">
+              </Link>
+              <Link to="/terms-of-use" className="text-primary-foreground/80 hover:text-accent transition-colors">
+                Terms of Use
+              </Link>
+              <Link to="/return-policy" className="text-primary-foreground/80 hover:text-accent transition-colors">
                 Return Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>

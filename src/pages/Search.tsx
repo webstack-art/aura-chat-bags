@@ -5,36 +5,66 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, Search as SearchIcon, Filter, X, Heart } from 'lucide-react';
-import { searchProducts, categories } from '@/data/products';
+import { MessageCircle, Search as SearchIcon, Filter, X, Heart, ShoppingCart } from 'lucide-react';
+import { searchProducts, categories, brands } from '@/data/products';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  // Common search suggestions
+  const searchSuggestions = [
+    'Luxury tote bags', 'Crossbody bags', 'Evening clutches', 'Leather handbags',
+    'Versace bags', 'Chanel bags', 'Gucci bags', 'Louis Vuitton', 'Prada bags',
+    'Shoulder bags', 'Mini bags', 'Work bags', 'Black bags', 'Brown bags'
+  ];
 
   useEffect(() => {
     const searchQuery = searchParams.get('q') || '';
     setQuery(searchQuery);
     if (searchQuery) {
       performSearch(searchQuery);
+    } else {
+      setResults([]);
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    // Update suggestions based on query
+    if (query.length > 0) {
+      const filtered = searchSuggestions.filter(suggestion =>
+        suggestion.toLowerCase().includes(query.toLowerCase())
+      );
+      setSuggestions(filtered.slice(0, 5));
+    } else {
+      setSuggestions([]);
+    }
+  }, [query]);
+
   const performSearch = (searchQuery: string) => {
     setIsLoading(true);
-    // Simulate search delay
+    // Enhanced search with better matching
     setTimeout(() => {
       let searchResults = searchProducts(searchQuery);
       
       // Apply category filter
       if (categoryFilter !== 'all') {
         searchResults = searchResults.filter(product => product.category === categoryFilter);
+      }
+      
+      // Apply brand filter
+      if (brandFilter !== 'all') {
+        searchResults = searchResults.filter(product => 
+          product.brand.toLowerCase() === brandFilter.toLowerCase()
+        );
       }
       
       // Apply price filter
@@ -66,6 +96,9 @@ const Search = () => {
         case 'rating':
           searchResults.sort((a, b) => b.rating - a.rating);
           break;
+        case 'newest':
+          searchResults.sort((a, b) => b.id - a.id);
+          break;
         default:
           break;
       }
@@ -80,11 +113,20 @@ const Search = () => {
     if (query.trim()) {
       setSearchParams({ q: query });
       performSearch(query);
+      setSuggestions([]);
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    setSearchParams({ q: suggestion });
+    performSearch(suggestion);
+    setSuggestions([]);
   };
 
   const clearFilters = () => {
     setCategoryFilter('all');
+    setBrandFilter('all');
     setPriceFilter('all');
     setSortBy('relevance');
     if (query) {
@@ -92,8 +134,29 @@ const Search = () => {
     }
   };
 
-  const handleWhatsAppClick = (product: any) => {
-    const message = `Hi! I'm interested in the ${product.name} (${product.price}). Can you provide more details?`;
+  const handleAddToCart = (product: any) => {
+    const message = `Hi! I would like to add this item to my cart:
+
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+📦 Category: ${product.category.replace('-', ' ')}
+
+Please let me know about availability and how to proceed with the purchase.`;
+    
+    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleQuickBuy = (product: any) => {
+    const message = `Hi! I found this product through search and want to buy it:
+
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+
+Can you please help me complete the purchase?`;
+    
     const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -182,6 +245,24 @@ const Search = () => {
                 </Select>
               </div>
 
+              {/* Brand Filter */}
+              <div className="space-y-3 mb-6">
+                <label className="text-sm font-medium">Brand</label>
+                <Select value={brandFilter} onValueChange={setBrandFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Brands" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Brands</SelectItem>
+                    {brands.map(brand => (
+                      <SelectItem key={brand.id} value={brand.name.toLowerCase()}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Price Filter */}
               <div className="space-y-3 mb-6">
                 <label className="text-sm font-medium">Price Range</label>
@@ -211,6 +292,7 @@ const Search = () => {
                     <SelectItem value="price-low">Price: Low to High</SelectItem>
                     <SelectItem value="price-high">Price: High to Low</SelectItem>
                     <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -291,7 +373,7 @@ const Search = () => {
                         <Button
                           variant="whatsapp"
                           size="sm"
-                          onClick={() => handleWhatsAppClick(product)}
+                          onClick={() => handleQuickBuy(product)}
                           className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
                         >
                           <MessageCircle className="h-4 w-4" />
@@ -306,6 +388,8 @@ const Search = () => {
                           {product.name}
                         </h3>
                       </Link>
+                      
+                      <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
                       
                       <div className="flex items-center mb-3">
                         <div className="flex">
@@ -333,14 +417,23 @@ const Search = () => {
                         </div>
                       </div>
 
-                      <Button
-                        variant="outline"
-                        className="w-full hover:bg-[#25D366] hover:border-[#25D366] hover:text-white transition-all duration-300"
-                        onClick={() => handleWhatsAppClick(product)}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Buy on WhatsApp
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          Add to Cart
+                        </Button>
+                        <Button
+                          variant="whatsapp"
+                          size="sm"
+                          onClick={() => handleQuickBuy(product)}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 ))}

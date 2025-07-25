@@ -11,6 +11,13 @@ import ProductDetail from "./pages/ProductDetail";
 import Category from "./pages/Category";
 import BestSellersPage from "./pages/BestSellersPage";
 import Search from "./pages/Search";
+import Brands from "./pages/Brands";
+import Reviews from "./pages/Reviews";
+import FAQ from "./pages/FAQ";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import Support from "./pages/Support";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,8 +31,15 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/brands" element={<Brands />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/category/:categoryName" element={<Category />} />
           <Route path="/best-sellers" element={<BestSellersPage />} />
