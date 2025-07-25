@@ -61,7 +61,28 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				/* Luxury color extensions */
+				gold: {
+					DEFAULT: 'hsl(var(--gold))',
+					muted: 'hsl(var(--gold-muted))'
+				},
+				burgundy: {
+					DEFAULT: 'hsl(var(--burgundy))',
+					light: 'hsl(var(--burgundy-light))'
+				},
+				cream: 'hsl(var(--cream))',
+				'warm-white': 'hsl(var(--warm-white))'
+			},
+			backgroundImage: {
+				'gradient-luxury': 'var(--gradient-luxury)',
+				'gradient-subtle': 'var(--gradient-subtle)',
+				'gradient-hero': 'var(--gradient-hero)'
+			},
+			boxShadow: {
+				'luxury': 'var(--shadow-luxury)',
+				'card': 'var(--shadow-card)',
+				'elegant': 'var(--shadow-elegant)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
