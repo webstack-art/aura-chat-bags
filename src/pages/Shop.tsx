@@ -100,64 +100,51 @@ Can you please help me complete the purchase?`;
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64 space-y-6">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4 flex items-center">
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
-              </h3>
-              
-              {/* Price Range */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Price Range</label>
-                <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Prices" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="0-200">$0 - $200</SelectItem>
-                    <SelectItem value="200-300">$200 - $300</SelectItem>
-                    <SelectItem value="300-500">$300 - $500</SelectItem>
-                    <SelectItem value="500+">$500+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </Card>
+        {/* Horizontal Filters */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 p-4 bg-card rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filters:</span>
+            </div>
+            
+            {/* Price Range Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground">Price:</label>
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger className="w-32 h-8">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Prices</SelectItem>
+                  <SelectItem value="0-200">$0 - $200</SelectItem>
+                  <SelectItem value="200-300">$200 - $300</SelectItem>
+                  <SelectItem value="300-500">$300 - $500</SelectItem>
+                  <SelectItem value="500+">$500+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Shop by Categories Card */}
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Shop by Category</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Browse our curated collections organized by style and purpose
-              </p>
+            {/* Quick Links */}
+            <div className="flex items-center gap-2 sm:ml-auto">
               <Link
                 to="/categories"
-                className="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+                className="inline-flex items-center px-3 py-1 text-xs bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
               >
-                View All Categories
+                Categories
               </Link>
-            </Card>
-
-            {/* Shop by Brands Card */}
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Shop by Brand</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Explore collections from luxury designer brands
-              </p>
               <Link
                 to="/brands"
-                className="inline-flex items-center justify-center w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors text-sm font-medium"
+                className="inline-flex items-center px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/90 transition-colors"
               >
-                View All Brands
+                Brands
               </Link>
-            </Card>
-          </aside>
+            </div>
+          </div>
+        </div>
 
-          {/* Main Content */}
-          <main className="flex-1">
+        {/* Main Content */}
+        <main className="w-full">
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <p className="text-muted-foreground">
@@ -309,7 +296,6 @@ Can you please help me complete the purchase?`;
               </div>
             )}
           </main>
-        </div>
       </div>
 
       <Footer />
