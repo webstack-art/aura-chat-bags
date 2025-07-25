@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 import { MessageCircle, Search as SearchIcon, Filter, X, Heart, ShoppingCart } from 'lucide-react';
 import { searchProducts, categories, brands } from '@/data/products';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,6 +21,9 @@ const Search = () => {
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   // Common search suggestions
   const searchSuggestions = [
@@ -135,25 +140,26 @@ const Search = () => {
   };
 
   const handleAddToCart = (product: any) => {
-    const message = `Hi! I would like to add this item to my cart:
-
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
-📦 Category: ${product.category.replace('-', ' ')}
-
-Please let me know about availability and how to proceed with the purchase.`;
+    addToCart({
+      id: Date.now(),
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    });
     
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    toast({
+      title: "Added to cart!",
+      description: `${product.name} has been added to your cart.`,
+    });
   };
 
   const handleQuickBuy = (product: any) => {
     const message = `Hi! I found this product through search and want to buy it:
 
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
+PRODUCT: ${product.name}
+PRICE: ${product.price}
+BRAND: ${product.brand}
 
 Can you please help me complete the purchase?`;
     

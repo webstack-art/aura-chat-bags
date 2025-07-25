@@ -8,26 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { MessageCircle, Filter, Grid, List, Heart, ShoppingCart } from 'lucide-react';
 import { products, categories, brands } from '@/data/products';
+import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [brandFilter, setBrandFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
+  const { addToCart } = useCart();
 
-  const categoryParam = searchParams.get('category');
-  const brandParam = searchParams.get('brand');
-  
+  // Remove category and brand filtering since they have dedicated pages
   const filteredProducts = products.filter(product => {
-    if (categoryParam && product.category !== categoryParam) return false;
-    if (brandParam && product.brand.toLowerCase() !== brandParam.toLowerCase()) return false;
-    if (categoryFilter !== 'all' && product.category !== categoryFilter) return false;
-    if (brandFilter !== 'all' && product.brand.toLowerCase() !== brandFilter.toLowerCase()) return false;
-    
-    // Price range filtering
+    // Only apply price range filtering
     if (priceRange !== 'all') {
       const price = parseInt(product.price.replace('$', ''));
       switch (priceRange) {
@@ -66,25 +59,21 @@ const Shop = () => {
   });
 
   const handleAddToCart = (product: any) => {
-    const message = `Hi! I would like to add this item to my cart:
-
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
-📦 Category: ${product.category.replace('-', ' ')}
-
-Please let me know about availability and how to proceed with the purchase.`;
-    
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    addToCart({
+      id: Date.now(), // Unique cart item ID
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    });
   };
 
   const handleQuickBuy = (product: any) => {
     const message = `Hi! I want to buy this product immediately:
 
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
+PRODUCT: ${product.name}
+PRICE: ${product.price}
+BRAND: ${product.brand}
 
 Can you please help me complete the purchase?`;
     
@@ -101,8 +90,7 @@ Can you please help me complete the purchase?`;
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-              {categoryParam ? `${categoryParam.replace('-', ' ')} Collection` : 
-               brandParam ? `${brandParam} Collection` : 'Our Collection'}
+              Our Complete Collection
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Discover luxury handbags crafted for the modern woman
@@ -112,106 +100,51 @@ Can you please help me complete the purchase?`;
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64 space-y-6">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4 flex items-center">
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
-              </h3>
-              
-              {/* Category Filter */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Category</label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Horizontal Filters */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 p-4 bg-card rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filters:</span>
+            </div>
+            
+            {/* Price Range Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground">Price:</label>
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger className="w-32 h-8">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Prices</SelectItem>
+                  <SelectItem value="0-200">$0 - $200</SelectItem>
+                  <SelectItem value="200-300">$200 - $300</SelectItem>
+                  <SelectItem value="300-500">$300 - $500</SelectItem>
+                  <SelectItem value="500+">$500+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Brand Filter */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Brand</label>
-                <Select value={brandFilter} onValueChange={setBrandFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Brands" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Brands</SelectItem>
-                    {brands.map(brand => (
-                      <SelectItem key={brand.id} value={brand.name.toLowerCase()}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Quick Links */}
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Link
+                to="/categories"
+                className="inline-flex items-center px-3 py-1 text-xs bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
+              >
+                Categories
+              </Link>
+              <Link
+                to="/brands"
+                className="inline-flex items-center px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/90 transition-colors"
+              >
+                Brands
+              </Link>
+            </div>
+          </div>
+        </div>
 
-              {/* Price Range */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Price Range</label>
-                <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Prices" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="0-200">$0 - $200</SelectItem>
-                    <SelectItem value="200-300">$200 - $300</SelectItem>
-                    <SelectItem value="300-500">$300 - $500</SelectItem>
-                    <SelectItem value="500+">$500+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </Card>
-
-            {/* Categories Quick Links */}
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Shop by Category</h3>
-              <div className="space-y-2">
-                {categories.map(category => (
-                  <Link
-                    key={category.id}
-                    to={`/category/${category.id}`}
-                    className="flex items-center justify-between p-2 rounded hover:bg-muted transition-colors"
-                  >
-                    <span className="text-sm">{category.name}</span>
-                    <span className="text-xs text-muted-foreground">({category.count})</span>
-                  </Link>
-                ))}
-              </div>
-            </Card>
-
-            {/* Brands Quick Links */}
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Shop by Brand</h3>
-              <div className="space-y-2">
-                {brands.map(brand => (
-                  <Link
-                    key={brand.id}
-                    to={`/shop?brand=${brand.name.toLowerCase()}`}
-                    className="flex items-center justify-between p-2 rounded hover:bg-muted transition-colors"
-                  >
-                    <span className="text-sm">{brand.name}</span>
-                    <span className="text-xs text-muted-foreground">({brand.count})</span>
-                  </Link>
-                ))}
-              </div>
-            </Card>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1">
+        {/* Main Content */}
+        <main className="w-full">
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <p className="text-muted-foreground">
@@ -355,8 +288,6 @@ Can you please help me complete the purchase?`;
                   variant="outline" 
                   className="mt-4"
                   onClick={() => {
-                    setCategoryFilter('all');
-                    setBrandFilter('all');
                     setPriceRange('all');
                   }}
                 >
@@ -365,7 +296,6 @@ Can you please help me complete the purchase?`;
               </div>
             )}
           </main>
-        </div>
       </div>
 
       <Footer />

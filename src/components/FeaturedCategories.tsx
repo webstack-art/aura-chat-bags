@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const categories = [
   {
@@ -6,28 +7,32 @@ const categories = [
     name: 'Tote Bags',
     description: 'Spacious and sophisticated',
     image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop',
-    itemCount: '24 items'
+    itemCount: '24 items',
+    slug: 'tote-bags'
   },
   {
     id: 2,
     name: 'Shoulder Bags',
     description: 'Classic elegance redefined',
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=400&fit=crop',
-    itemCount: '18 items'
+    itemCount: '18 items',
+    slug: 'shoulder-bags'
   },
   {
     id: 3,
     name: 'Crossbody',
     description: 'Freedom meets fashion',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
-    itemCount: '15 items'
+    itemCount: '15 items',
+    slug: 'crossbody'
   },
   {
     id: 4,
     name: 'Clutches',
     description: 'Evening sophistication',
     image: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400&h=400&fit=crop',
-    itemCount: '12 items'
+    itemCount: '12 items',
+    slug: 'clutches'
   }
 ];
 
@@ -46,9 +51,10 @@ const FeaturedCategories = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
-              className="group relative overflow-hidden rounded-2xl bg-card shadow-card hover:shadow-luxury transition-all duration-500 hover:-translate-y-2"
+              to={`/category/${category.slug}`}
+              className="group relative overflow-hidden rounded-2xl bg-card shadow-card hover:shadow-luxury transition-all duration-500 hover:-translate-y-2 block"
             >
               {/* Image */}
               <div className="aspect-square overflow-hidden">
@@ -79,7 +85,7 @@ const FeaturedCategories = () => {
                   Explore {category.name}
                 </Button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

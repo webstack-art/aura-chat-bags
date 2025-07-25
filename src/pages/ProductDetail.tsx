@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageCircle, Heart, Share2, Truck, Shield, RotateCcw, Minus, Plus, Star, ShoppingCart } from 'lucide-react';
 import { getProductById, products } from '@/data/products';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 
 const ProductDetail = () => {
@@ -18,6 +19,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || '');
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   if (!product) {
     return (
@@ -39,29 +41,30 @@ const ProductDetail = () => {
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
-    const message = `Hi! I would like to add this item to my cart:
-
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
-${selectedColor ? `🎨 Color: ${selectedColor}` : ''}
-📦 Quantity: ${quantity}
-📂 Category: ${product.category.replace('-', ' ')}
-
-Please let me know about availability and how to proceed with the purchase.`;
+    addToCart({
+      id: Date.now(), // Unique cart item ID
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity,
+      color: selectedColor,
+    });
     
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    toast({
+      title: "Added to cart!",
+      description: `${quantity}x ${product.name} added to your cart.`,
+    });
   };
 
   const handleBuyNow = () => {
     const message = `Hi! I want to buy this product immediately:
 
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
-${selectedColor ? `🎨 Color: ${selectedColor}` : ''}
-📦 Quantity: ${quantity}
+PRODUCT: ${product.name}
+PRICE: ${product.price}
+BRAND: ${product.brand}
+${selectedColor ? `COLOR: ${selectedColor}` : ''}
+QUANTITY: ${quantity}
 
 Can you please help me complete the purchase right away?`;
     
