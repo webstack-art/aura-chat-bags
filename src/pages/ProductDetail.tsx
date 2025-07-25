@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, Heart, Share2, Truck, Shield, RotateCcw, Minus, Plus, Star } from 'lucide-react';
+import { MessageCircle, Heart, Share2, Truck, Shield, RotateCcw, Minus, Plus, Star, ShoppingCart } from 'lucide-react';
 import { getProductById, products } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,12 +38,32 @@ const ProductDetail = () => {
   const images = product.images || [product.image];
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
-  const handleWhatsAppOrder = () => {
-    const message = `Hi! I'd like to order the ${product.name} (${product.price})
-${selectedColor ? `Color: ${selectedColor}` : ''}
-Quantity: ${quantity}
+  const handleAddToCart = () => {
+    const message = `Hi! I would like to add this item to my cart:
 
-Can you provide more details about availability and shipping?`;
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+${selectedColor ? `🎨 Color: ${selectedColor}` : ''}
+📦 Quantity: ${quantity}
+📂 Category: ${product.category.replace('-', ' ')}
+
+Please let me know about availability and how to proceed with the purchase.`;
+    
+    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleBuyNow = () => {
+    const message = `Hi! I want to buy this product immediately:
+
+🛍️ *${product.name}*
+💰 Price: ${product.price}
+🏷️ Brand: ${product.brand}
+${selectedColor ? `🎨 Color: ${selectedColor}` : ''}
+📦 Quantity: ${quantity}
+
+Can you please help me complete the purchase right away?`;
     
     const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -120,6 +140,16 @@ Can you provide more details about availability and shipping?`;
                 </Badge>
               )}
               <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
+              
+              {/* Brand */}
+              <div className="mb-4">
+                <Link 
+                  to={`/shop?brand=${product.brand.toLowerCase()}`}
+                  className="text-lg text-primary hover:text-primary/80 font-medium transition-colors"
+                >
+                  {product.brand}
+                </Link>
+              </div>
               
               {/* Rating */}
               <div className="flex items-center space-x-2 mb-4">
@@ -213,16 +243,28 @@ Can you provide more details about availability and shipping?`;
 
             {/* Actions */}
             <div className="space-y-3">
-              <Button
-                variant="whatsapp"
-                size="lg"
-                className="w-full"
-                onClick={handleWhatsAppOrder}
-                disabled={!product.inStock}
-              >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                Order via WhatsApp
-              </Button>
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                  onClick={handleAddToCart}
+                  disabled={!product.inStock}
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Add to Cart
+                </Button>
+                <Button
+                  variant="whatsapp"
+                  size="lg"
+                  className="flex-1"
+                  onClick={handleBuyNow}
+                  disabled={!product.inStock}
+                >
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  Buy Now
+                </Button>
+              </div>
               
               <div className="flex space-x-3">
                 <Button variant="outline" className="flex-1" onClick={handleAddToWishlist}>
@@ -287,6 +329,10 @@ Can you provide more details about availability and shipping?`;
                 <h3 className="text-xl font-semibold mb-4">Specifications</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
+                    <p className="font-medium">Brand:</p>
+                    <p className="text-muted-foreground">{product.brand}</p>
+                  </div>
+                  <div>
                     <p className="font-medium">Materials:</p>
                     <p className="text-muted-foreground">{product.materials}</p>
                   </div>
@@ -304,6 +350,12 @@ Can you provide more details about availability and shipping?`;
                       <p className="text-muted-foreground">{product.colors.join(', ')}</p>
                     </div>
                   )}
+                  <div>
+                    <p className="font-medium">Stock Status:</p>
+                    <p className={`font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                      {product.inStock ? 'In Stock' : 'Out of Stock'}
+                    </p>
+                  </div>
                 </div>
               </Card>
             </TabsContent>

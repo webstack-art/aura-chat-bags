@@ -7,6 +7,7 @@ export interface Product {
   image: string;
   images?: string[];
   category: string;
+  brand: string;
   description: string;
   features: string[];
   materials: string;
@@ -31,6 +32,7 @@ export const products: Product[] = [
       'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&h=1000&fit=crop'
     ],
     category: 'tote-bags',
+    brand: 'Versace',
     description: 'The Milano Luxury Tote combines Italian craftsmanship with modern sophistication. Perfect for the professional woman who values both style and functionality.',
     features: [
       'Premium Italian leather construction',
@@ -57,6 +59,7 @@ export const products: Product[] = [
       'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&h=1000&fit=crop'
     ],
     category: 'crossbody',
+    brand: 'Chanel',
     description: 'Effortless chic meets Parisian elegance in this versatile crossbody bag. Perfect for day-to-night transitions.',
     features: [
       'Adjustable crossbody strap',
@@ -81,6 +84,7 @@ export const products: Product[] = [
       'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&h=1000&fit=crop'
     ],
     category: 'clutches',
+    brand: 'Gucci',
     description: 'Sophisticated evening elegance inspired by Venetian luxury. The perfect companion for special occasions.',
     features: [
       'Satin finish with beaded details',
@@ -106,6 +110,7 @@ export const products: Product[] = [
       'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&h=1000&fit=crop'
     ],
     category: 'shoulder-bags',
+    brand: 'Louis Vuitton',
     description: 'Classic British elegance reimagined for the modern woman. Timeless design meets contemporary functionality.',
     features: [
       'Classic structured design',
@@ -127,6 +132,7 @@ export const products: Product[] = [
     price: '$179',
     image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&h=600&fit=crop',
     category: 'crossbody',
+    brand: 'Prada',
     description: 'Compact luxury for the minimalist. Perfect for essential carrying.',
     features: ['Compact design', 'Adjustable strap', 'Premium finish'],
     materials: 'Saffiano Leather',
@@ -141,12 +147,43 @@ export const products: Product[] = [
     price: '$329',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=600&fit=crop',
     category: 'tote-bags',
+    brand: 'Hermes',
     description: 'Professional elegance for the working woman.',
     features: ['Laptop compartment', 'Professional design', 'Durable construction'],
     materials: 'Business Leather',
     dimensions: '16" W x 13" H x 5" D',
     rating: 4.7,
     reviews: 78,
+    inStock: true
+  },
+  {
+    id: 7,
+    name: 'Beverly Hills Clutch',
+    price: '$225',
+    image: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=500&h=600&fit=crop',
+    category: 'clutches',
+    brand: 'Versace',
+    description: 'Glamorous evening accessory with Hollywood charm.',
+    features: ['Rhinestone details', 'Chain strap', 'Velvet lining'],
+    materials: 'Satin with Crystal Embellishments',
+    dimensions: '10" W x 6" H x 2" D',
+    rating: 4.6,
+    reviews: 34,
+    inStock: true
+  },
+  {
+    id: 8,
+    name: 'Milan Business Bag',
+    price: '$399',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=600&fit=crop',
+    category: 'shoulder-bags',
+    brand: 'Chanel',
+    description: 'Executive-level sophistication for the modern businesswoman.',
+    features: ['Document compartments', 'Laptop sleeve', 'Premium finish'],
+    materials: 'Executive Leather',
+    dimensions: '14" W x 11" H x 4" D',
+    rating: 4.8,
+    reviews: 67,
     inStock: true
   }
 ];
@@ -182,6 +219,51 @@ export const categories = [
   }
 ];
 
+export const brands = [
+  {
+    id: 'versace',
+    name: 'Versace',
+    description: 'Italian luxury fashion house',
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'versace').length
+  },
+  {
+    id: 'chanel',
+    name: 'Chanel',
+    description: 'French luxury fashion brand',
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'chanel').length
+  },
+  {
+    id: 'gucci',
+    name: 'Gucci',
+    description: 'Italian luxury fashion house',
+    image: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'gucci').length
+  },
+  {
+    id: 'louis-vuitton',
+    name: 'Louis Vuitton',
+    description: 'French luxury fashion house',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'louis vuitton').length
+  },
+  {
+    id: 'prada',
+    name: 'Prada',
+    description: 'Italian luxury fashion house',
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'prada').length
+  },
+  {
+    id: 'hermes',
+    name: 'Hermes',
+    description: 'French luxury goods manufacturer',
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
+    count: products.filter(p => p.brand.toLowerCase() === 'hermes').length
+  }
+];
+
 export const getBestSellers = () => products.filter(p => p.rating >= 4.6).slice(0, 4);
 
 export const getProductById = (id: number) => products.find(p => p.id === id);
@@ -189,9 +271,13 @@ export const getProductById = (id: number) => products.find(p => p.id === id);
 export const getProductsByCategory = (categoryId: string) => 
   products.filter(p => p.category === categoryId);
 
+export const getProductsByBrand = (brandName: string) => 
+  products.filter(p => p.brand.toLowerCase() === brandName.toLowerCase());
+
 export const searchProducts = (query: string) => 
   products.filter(p => 
     p.name.toLowerCase().includes(query.toLowerCase()) ||
     p.description.toLowerCase().includes(query.toLowerCase()) ||
-    p.category.toLowerCase().includes(query.toLowerCase())
+    p.category.toLowerCase().includes(query.toLowerCase()) ||
+    p.brand.toLowerCase().includes(query.toLowerCase())
   );
