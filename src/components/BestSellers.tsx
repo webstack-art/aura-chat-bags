@@ -2,30 +2,35 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart, ShoppingCart } from 'lucide-react';
 import { getBestSellers } from '@/data/products';
 import { Link } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 const BestSellers = () => {
   const bestSellers = getBestSellers();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const handleAddToCart = (product) => {
-    const message = `Hi! I would like to add this item to my cart:
-
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
-📦 Category: ${product.category.replace('-', ' ')}
-
-Please let me know about availability and how to proceed with the purchase.`;
+    addToCart({
+      id: Date.now(),
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    });
     
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    toast({
+      title: "Added to cart!",
+      description: `${product.name} has been added to your cart.`,
+    });
   };
 
   const handleQuickBuy = (product) => {
     const message = `Hi! I want to buy this product immediately:
 
-🛍️ *${product.name}*
-💰 Price: ${product.price}
-🏷️ Brand: ${product.brand}
+PRODUCT: ${product.name}
+PRICE: ${product.price}
+BRAND: ${product.brand}
 
 Can you please help me complete the purchase?`;
     

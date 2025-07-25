@@ -1,18 +1,27 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Menu, X, Search, ShoppingBag } from 'lucide-react';
+import { MessageCircle, Menu, X, Search, ShoppingBag, User, LogOut, Package } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import CartDrawer from './CartDrawer';
+import AuthModal from './AuthModal';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
+  const { getCartItemCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
+    { name: 'Categories', href: '/categories' },
     { name: 'Brands', href: '/brands' },
     { name: 'About', href: '/about' },
     { name: 'Reviews', href: '/reviews' },
@@ -23,6 +32,7 @@ const Header = () => {
     { name: 'FAQ', href: '/faq' },
     { name: 'Return Policy', href: '/return-policy' },
     { name: 'Support', href: '/support' },
+    { name: 'Orders', href: '/orders' },
     { name: 'Terms of Use', href: '/terms-of-use' },
     { name: 'Privacy Policy', href: '/privacy-policy' },
   ];
@@ -116,6 +126,65 @@ const Header = () => {
                 <Search className="h-5 w-5" />
               </Button>
             )}
+
+            {/* Cart Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={() => setShowCart(true)}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {getCartItemCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                  {getCartItemCount()}
+                </span>
+              )}
+            </Button>
+
+            {/* User Account */}
+            {isAuthenticated ? (
+              <div className="relative group">
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+                <div className="absolute right-0 top-full mt-1 w-48 bg-background border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="p-3 border-b">
+                    <p className="font-semibold text-sm">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                  <div className="p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => navigate('/orders')}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      My Orders
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-destructive hover:text-destructive"
+                      onClick={logout}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            )}
             
             <Button 
               variant="whatsapp" 
@@ -199,6 +268,16 @@ const Header = () => {
           </div>
         )}
       </div>
+
+      {/* Cart Drawer */}
+      <CartDrawer isOpen={showCart} onClose={() => setShowCart(false)} />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => setShowAuthModal(false)}
+      />
     </header>
   );
 };
