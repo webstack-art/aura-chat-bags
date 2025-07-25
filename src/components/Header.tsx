@@ -23,6 +23,8 @@ const Header = () => {
     { name: 'FAQ', href: '/faq' },
     { name: 'Return Policy', href: '/return-policy' },
     { name: 'Support', href: '/support' },
+    { name: 'Terms of Use', href: '/terms-of-use' },
+    { name: 'Privacy Policy', href: '/privacy-policy' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {

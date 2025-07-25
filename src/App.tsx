@@ -16,6 +16,8 @@ import Reviews from "./pages/Reviews";
 import FAQ from "./pages/FAQ";
 import ReturnPolicy from "./pages/ReturnPolicy";
 import Support from "./pages/Support";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
           <Route path="/faq" element={<FAQ />} />
           <Route path="/return-policy" element={<ReturnPolicy />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/category/:categoryName" element={<Category />} />
           <Route path="/best-sellers" element={<BestSellersPage />} />
