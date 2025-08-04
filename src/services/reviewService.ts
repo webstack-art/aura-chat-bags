@@ -66,7 +66,11 @@ class ReviewService {
     total_reviews: number;
     rating_distribution: { [key: number]: number };
   }> {
-    const response = await apiService.get(`/reviews/products/${productId}/stats/`);
+    const response = await apiService.get<{
+      average_rating: number;
+      total_reviews: number;
+      rating_distribution: { [key: number]: number };
+    }>(`/reviews/products/${productId}/stats/`);
     return response.data;
   }
 }

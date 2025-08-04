@@ -84,7 +84,7 @@ class OrderService {
   }
 
   async getOrderStatus(orderNumber: string): Promise<{ status: string; tracking_number?: string }> {
-    const response = await apiService.get(`/orders/${orderNumber}/status/`);
+    const response = await apiService.get<{ status: string; tracking_number?: string }>(`/orders/${orderNumber}/status/`);
     return response.data;
   }
 
@@ -100,7 +100,7 @@ class OrderService {
 
   async getOrderInvoice(orderNumber: string): Promise<Blob> {
     const response = await apiService.get(`/orders/${orderNumber}/invoice/`, { responseType: 'blob' });
-    return response.data;
+    return response.data as Blob;
   }
 
   async trackOrder(orderNumber: string): Promise<{
@@ -113,7 +113,16 @@ class OrderService {
       description: string;
     }[];
   }> {
-    const response = await apiService.get(`/orders/${orderNumber}/track/`);
+    const response = await apiService.get<{
+      status: string;
+      tracking_number?: string;
+      tracking_events: {
+        status: string;
+        location: string;
+        timestamp: string;
+        description: string;
+      }[];
+    }>(`/orders/${orderNumber}/track/`);
     return response.data;
   }
 }
