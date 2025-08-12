@@ -2,11 +2,13 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Grid, Package, ShoppingBag } from 'lucide-react';
-import { categories } from '@/data/products';
+import { Grid, Package, Loader2 } from 'lucide-react';
+import { useCategories } from '@/hooks/useProducts';
 import { Link } from 'react-router-dom';
 
 const Categories = () => {
+  const { data: categories, isLoading, error } = useCategories();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -30,98 +32,92 @@ const Categories = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {categories.map((category) => (
-                <Link key={category.id} to={`/category/${category.id}`}>
-                  <Card className="group relative overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    {/* Category Image */}
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                      <img
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-3 text-muted-foreground">Loading categories...</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-20">
+                <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Unable to load categories</h3>
+                <p className="text-muted-foreground">Please try again later.</p>
+              </div>
+            ) : categories?.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {categories.map((category) => (
+                  <Link key={category.id} to={`/category/${category.slug}`}>
+                    <Card className="group relative overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                      {/* Category Image */}
+                      <div className="aspect-[4/3] relative overflow-hidden">
+                        <img
+                          src={category.image || '/placeholder-category.jpg'}
+                          alt={category.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        
+                        {/* Category Badge */}
+                        <div className="absolute top-4 right-4">
+                          <Badge variant="secondary" className="bg-white/90 text-foreground">
+                            {category.product_count || 0} items
+                          </Badge>
+                        </div>
+                      </div>
                       
-                      {/* Category Badge */}
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="secondary" className="bg-white/90 text-foreground">
-                          {category.count} items
-                        </Badge>
+                      {/* Category Info */}
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                          {category.name}
+                        </h3>
+                        <p className="text-sm opacity-90 leading-relaxed">
+                          {category.description || `Discover our ${category.name.toLowerCase()} collection`}
+                        </p>
                       </div>
-                    </div>
-
-                    {/* Category Info */}
-                    <div className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                            {category.name}
-                          </h3>
-                          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                            {category.description}
-                          </p>
-                        </div>
-                        <ShoppingBag className="h-6 w-6 text-primary flex-shrink-0 ml-4" />
-                      </div>
-
-                      {/* Category Features */}
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Package className="h-4 w-4 mr-2" />
-                          <span>Perfect for {category.description.toLowerCase()}</span>
-                        </div>
-                      </div>
-
-                      {/* Hover Effect */}
-                      <div className="mt-4 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-sm font-medium">Explore Collection →</span>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No categories available</h3>
+                <p className="text-muted-foreground">Check back later for new categories.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <Card className="max-w-4xl mx-auto p-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Can't Find What You're Looking For?</h2>
-            <p className="text-muted-foreground mb-6 text-lg">
-              Browse our complete collection or contact us for personalized recommendations
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/shop">
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center space-x-3">
-                    <ShoppingBag className="h-8 w-8 text-primary" />
-                    <div className="text-left">
-                      <h3 className="font-semibold">Browse All Products</h3>
-                      <p className="text-sm text-muted-foreground">View our complete collection</p>
-                    </div>
+      {/* Categories Stats */}
+      {categories?.length && (
+        <section className="py-16 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    {categories.length}
                   </div>
-                </Card>
-              </Link>
-              
-              <Link to="/brands">
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center space-x-3">
-                    <Grid className="h-8 w-8 text-primary" />
-                    <div className="text-left">
-                      <h3 className="font-semibold">Shop by Brands</h3>
-                      <p className="text-sm text-muted-foreground">Explore luxury designers</p>
-                    </div>
+                  <p className="text-muted-foreground">Categories</p>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    {categories.reduce((total, cat) => total + (cat.product_count || 0), 0)}
                   </div>
-                </Card>
-              </Link>
+                  <p className="text-muted-foreground">Total Products</p>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    500+
+                  </div>
+                  <p className="text-muted-foreground">Happy Customers</p>
+                </div>
+              </div>
             </div>
-          </Card>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       <Footer />
     </div>

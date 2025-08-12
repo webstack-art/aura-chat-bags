@@ -5,11 +5,12 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, Search as SearchIcon, Filter, X, Heart, ShoppingCart } from 'lucide-react';
-import { searchProducts, categories, brands } from '@/data/products';
+import { Badge } from '@/components/ui/badge';
+import { MessageCircle, Search as SearchIcon, Filter, X, Heart, ShoppingCart, Star, Loader2, Package } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
+import { useSearchProducts, useCategories, useBrands } from '@/hooks/useProducts';
+import { useAddToCart } from '@/hooks/useCart';
+import { toast } from 'sonner';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,12 +19,12 @@ const Search = () => {
   const [brandFilter, setBrandFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
-  const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   
-  const { addToCart } = useCart();
-  const { toast } = useToast();
+  const addToCartMutation = useAddToCart();
+  const { data: categories } = useCategories();
+  const { data: brands } = useBrands();
 
   // Common search suggestions
   const searchSuggestions = [
@@ -32,14 +33,39 @@ const Search = () => {
     'Shoulder bags', 'Mini bags', 'Work bags', 'Black bags', 'Brown bags'
   ];
 
+  // Build filters for API call
+  const buildFilters = () => {
+    const filters: any = {};
+    
+    if (categoryFilter !== 'all') {
+      filters.category = categoryFilter;
+    }
+    
+    if (brandFilter !== 'all') {
+      filters.brand = brandFilter;
+    }
+    
+    if (priceFilter !== 'all') {
+      const [min, max] = priceFilter.split('-').map(Number);
+      if (min) filters.min_price = min;
+      if (max) filters.max_price = max;
+    }
+
+    if (sortBy !== 'relevance') {
+      filters.ordering = sortBy === 'price_low' ? 'price' : 
+                        sortBy === 'price_high' ? '-price' :
+                        sortBy === 'newest' ? '-created_at' :
+                        sortBy === 'rating' ? '-average_rating' : undefined;
+    }
+
+    return filters;
+  };
+
+  const { data: searchResults, isLoading, error } = useSearchProducts(query, buildFilters());
+
   useEffect(() => {
     const searchQuery = searchParams.get('q') || '';
     setQuery(searchQuery);
-    if (searchQuery) {
-      performSearch(searchQuery);
-    } else {
-      setResults([]);
-    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -54,79 +80,30 @@ const Search = () => {
     }
   }, [query]);
 
-  const performSearch = (searchQuery: string) => {
-    setIsLoading(true);
-    // Enhanced search with better matching
-    setTimeout(() => {
-      let searchResults = searchProducts(searchQuery);
-      
-      // Apply category filter
-      if (categoryFilter !== 'all') {
-        searchResults = searchResults.filter(product => product.category === categoryFilter);
-      }
-      
-      // Apply brand filter
-      if (brandFilter !== 'all') {
-        searchResults = searchResults.filter(product => 
-          product.brand.toLowerCase() === brandFilter.toLowerCase()
-        );
-      }
-      
-      // Apply price filter
-      if (priceFilter !== 'all') {
-        searchResults = searchResults.filter(product => {
-          const price = parseInt(product.price.replace('$', ''));
-          switch (priceFilter) {
-            case '0-200': return price <= 200;
-            case '200-300': return price > 200 && price <= 300;
-            case '300-500': return price > 300 && price <= 500;
-            case '500+': return price > 500;
-            default: return true;
-          }
-        });
-      }
-      
-      // Apply sorting
-      switch (sortBy) {
-        case 'price-low':
-          searchResults.sort((a, b) => 
-            parseInt(a.price.replace('$', '')) - parseInt(b.price.replace('$', ''))
-          );
-          break;
-        case 'price-high':
-          searchResults.sort((a, b) => 
-            parseInt(b.price.replace('$', '')) - parseInt(a.price.replace('$', ''))
-          );
-          break;
-        case 'rating':
-          searchResults.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'newest':
-          searchResults.sort((a, b) => b.id - a.id);
-          break;
-        default:
-          break;
-      }
-      
-      setResults(searchResults);
-      setIsLoading(false);
-    }, 300);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      setSearchParams({ q: query });
-      performSearch(query);
-      setSuggestions([]);
+  const handleSearch = (searchQuery: string) => {
+    if (searchQuery.trim()) {
+      setSearchParams({ q: searchQuery.trim() });
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setQuery(suggestion);
-    setSearchParams({ q: suggestion });
-    performSearch(suggestion);
-    setSuggestions([]);
+  const handleAddToCart = (productId: number, productName: string) => {
+    addToCartMutation.mutate({
+      product: productId,
+      quantity: 1,
+    }, {
+      onSuccess: () => {
+        toast.success(`${productName} added to cart!`);
+      },
+      onError: () => {
+        toast.error('Failed to add to cart. Please try again.');
+      }
+    });
+  };
+
+  const handleWhatsAppClick = (product: any) => {
+    const message = `Hi! I'm interested in the ${product.name} ($${product.price}). Can you provide more details?`;
+    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const clearFilters = () => {
@@ -134,354 +111,319 @@ const Search = () => {
     setBrandFilter('all');
     setPriceFilter('all');
     setSortBy('relevance');
-    if (query) {
-      performSearch(query);
-    }
   };
 
-  const handleAddToCart = (product: any) => {
-    addToCart({
-      id: Date.now(),
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-    });
-    
-    toast({
-      title: "Added to cart!",
-      description: `${product.name} has been added to your cart.`,
-    });
-  };
-
-  const handleQuickBuy = (product: any) => {
-    const message = `Hi! I found this product through search and want to buy it:
-
-PRODUCT: ${product.name}
-PRICE: ${product.price}
-BRAND: ${product.brand}
-
-Can you please help me complete the purchase?`;
-    
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  const products = searchResults?.results || [];
+  const hasActiveFilters = categoryFilter !== 'all' || brandFilter !== 'all' || priceFilter !== 'all';
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Search Hero */}
-      <section className="bg-gradient-subtle py-12">
+      {/* Search Header */}
+      <section className="pt-24 pb-8 bg-gradient-subtle">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-              Search Our Collection
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+              {query ? `Search Results for "${query}"` : 'Search Products'}
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Find the perfect handbag for your style
-            </p>
             
-            {/* Search Form */}
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <div className="relative">
+                <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search for handbags, styles, or brands..."
+                  placeholder="Search for bags, brands, categories..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="pl-10 h-12"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(query)}
+                  className="pl-12 pr-12 h-12 text-lg"
                 />
+                <Button
+                  onClick={() => handleSearch(query)}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  size="sm"
+                >
+                  Search
+                </Button>
               </div>
-              <Button type="submit" size="lg" className="px-8">
-                Search
-              </Button>
-            </form>
+              
+              {/* Search Suggestions */}
+              {suggestions.length > 0 && query && (
+                <div className="absolute top-full left-0 right-0 bg-background border rounded-lg shadow-lg mt-1 z-50">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSearch(suggestion)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b last:border-b-0"
+                    >
+                      <SearchIcon className="inline h-4 w-4 mr-3 text-muted-foreground" />
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Search Tags */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {['Luxury bags', 'Crossbody', 'Tote bags', 'Evening clutch', 'Leather bags'].map((tag) => (
+                <Button
+                  key={tag}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSearch(tag)}
+                  className="rounded-full"
+                >
+                  {tag}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">Home</Link>
-            <span>/</span>
-            <span className="text-foreground">
-              Search {query && `"${query}"`}
-            </span>
-          </div>
-        </nav>
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center">
-                  <Filter className="h-5 w-5 mr-2" />
-                  Filters
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-primary hover:text-primary/80"
-                >
-                  Clear All
-                </Button>
-              </div>
-              
-              {/* Category Filter */}
-              <div className="space-y-3 mb-6">
-                <label className="text-sm font-medium">Category</label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Brand Filter */}
-              <div className="space-y-3 mb-6">
-                <label className="text-sm font-medium">Brand</label>
-                <Select value={brandFilter} onValueChange={setBrandFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Brands" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Brands</SelectItem>
-                    {brands.map(brand => (
-                      <SelectItem key={brand.id} value={brand.name.toLowerCase()}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Price Filter */}
-              <div className="space-y-3 mb-6">
-                <label className="text-sm font-medium">Price Range</label>
-                <Select value={priceFilter} onValueChange={setPriceFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Prices" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="0-200">$0 - $200</SelectItem>
-                    <SelectItem value="200-300">$200 - $300</SelectItem>
-                    <SelectItem value="300-500">$300 - $500</SelectItem>
-                    <SelectItem value="500+">$500+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sort By */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Sort By</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="relevance">Relevance</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </Card>
-
-            {/* Popular Searches */}
-            <Card className="p-6 mt-6">
-              <h3 className="font-semibold mb-4">Popular Searches</h3>
-              <div className="space-y-2">
-                {['Tote bags', 'Crossbody', 'Evening clutch', 'Work bags', 'Weekend bags'].map(term => (
-                  <button
-                    key={term}
-                    onClick={() => {
-                      setQuery(term);
-                      setSearchParams({ q: term });
-                    }}
-                    className="block w-full text-left text-sm text-muted-foreground hover:text-primary transition-colors py-1"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </Card>
-          </aside>
-
-          {/* Search Results */}
-          <main className="flex-1">
-            {/* Results Header */}
+      {/* Filters and Results */}
+      {query && (
+        <section className="py-8">
+          <div className="container mx-auto px-4">
+            {/* Filters Toggle */}
             <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">
-                  {query ? `Search Results for "${query}"` : 'Search Results'}
-                </h2>
-                <p className="text-muted-foreground">
-                  {isLoading ? 'Searching...' : `${results.length} products found`}
-                </p>
-              </div>
-            </div>
-
-            {/* Results Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="aspect-[4/5] bg-muted"></div>
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 bg-muted rounded"></div>
-                      <div className="h-4 bg-muted rounded w-2/3"></div>
-                      <div className="h-8 bg-muted rounded"></div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : results.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {results.map((product) => (
-                  <Card key={product.id} className="group overflow-hidden hover:shadow-luxury transition-all duration-300">
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <Link to={`/product/${product.id}`}>
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                      </Link>
-                      
-                      {product.badge && (
-                        <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
-                          {product.badge}
-                        </div>
-                      )}
-
-                      <button className="absolute top-4 right-4 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110">
-                        <Heart className="h-4 w-4 text-primary" />
-                      </button>
-
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Button
-                          variant="whatsapp"
-                          size="sm"
-                          onClick={() => handleQuickBuy(product)}
-                          className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          Quick Buy
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <Link to={`/product/${product.id}`}>
-                        <h3 className="text-lg font-semibold mb-2 text-card-foreground group-hover:text-primary transition-colors">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      
-                      <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
-                      
-                      <div className="flex items-center mb-3">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-sm ${i < Math.floor(product.rating) ? 'text-accent' : 'text-muted'}`}>
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          ({product.reviews})
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl font-bold text-primary">
-                            {product.price}
-                          </span>
-                          {product.originalPrice && (
-                            <span className="text-sm text-muted-foreground line-through">
-                              {product.originalPrice}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
-                          onClick={() => handleAddToCart(product)}
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          Add to Cart
-                        </Button>
-                        <Button
-                          variant="whatsapp"
-                          size="sm"
-                          onClick={() => handleQuickBuy(product)}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : query ? (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-2xl font-semibold mb-4">No Results Found</h3>
-                <p className="text-muted-foreground mb-8">
-                  We couldn't find any products matching "{query}". Try different keywords or browse our categories.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button variant="outline" onClick={clearFilters}>
-                    Clear Filters
-                  </Button>
-                  <Button asChild>
-                    <Link to="/shop">Browse All Products</Link>
-                  </Button>
-                  <Button 
-                    variant="whatsapp"
-                    onClick={() => window.open(`https://wa.me/1234567890?text=Hi! I'm looking for "${query}" but couldn't find it on the website. Can you help me?`, '_blank')}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Ask Us
-                  </Button>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="lg:hidden"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters {hasActiveFilters && <Badge variant="secondary" className="ml-2">Active</Badge>}
+                </Button>
+                
+                {/* Results count */}
+                <div className="text-sm text-muted-foreground">
+                  {isLoading ? (
+                    'Searching...'
+                  ) : searchResults ? (
+                    `${searchResults.count || 0} results found`
+                  ) : null}
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">👜</div>
-                <h3 className="text-2xl font-semibold mb-4">Start Your Search</h3>
-                <p className="text-muted-foreground mb-8">
-                  Enter a search term above to find the perfect handbag for you.
-                </p>
-                <Button asChild>
-                  <Link to="/shop">Browse All Products</Link>
-                </Button>
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">Most Relevant</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="price_low">Price: Low to High</SelectItem>
+                  <SelectItem value="price_high">Price: High to Low</SelectItem>
+                  <SelectItem value="rating">Best Rated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-8">
+              {/* Filters Sidebar */}
+              <div className={`${showFilters ? 'block' : 'hidden'} lg:block lg:w-64 flex-shrink-0`}>
+                <Card className="p-6 sticky top-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Filters</h3>
+                    {hasActiveFilters && (
+                      <Button variant="ghost" size="sm" onClick={clearFilters}>
+                        <X className="h-4 w-4 mr-1" />
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Category Filter */}
+                    <div>
+                      <h4 className="font-medium mb-3">Category</h4>
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {categories?.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Brand Filter */}
+                    <div>
+                      <h4 className="font-medium mb-3">Brand</h4>
+                      <Select value={brandFilter} onValueChange={setBrandFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Brands" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Brands</SelectItem>
+                          {brands?.map((brand) => (
+                            <SelectItem key={brand.id} value={brand.id.toString()}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Price Filter */}
+                    <div>
+                      <h4 className="font-medium mb-3">Price Range</h4>
+                      <Select value={priceFilter} onValueChange={setPriceFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Prices" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Prices</SelectItem>
+                          <SelectItem value="0-100">Under $100</SelectItem>
+                          <SelectItem value="100-300">$100 - $300</SelectItem>
+                          <SelectItem value="300-500">$300 - $500</SelectItem>
+                          <SelectItem value="500-1000">$500 - $1,000</SelectItem>
+                          <SelectItem value="1000-">Over $1,000</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            )}
-          </main>
-        </div>
-      </div>
+
+              {/* Results */}
+              <div className="flex-1">
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="ml-3 text-muted-foreground">Searching...</span>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-20">
+                    <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Search failed</h3>
+                    <p className="text-muted-foreground">Please try again or refine your search.</p>
+                  </div>
+                ) : products.length === 0 ? (
+                  <div className="text-center py-20">
+                    <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Try adjusting your search terms or filters.
+                    </p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Suggestions:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {searchSuggestions.slice(0, 4).map((suggestion) => (
+                          <Button
+                            key={suggestion}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSearch(suggestion)}
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {products.map((product) => (
+                      <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-all duration-300">
+                        {/* Product Image */}
+                        <div className="relative aspect-square overflow-hidden">
+                          <Link to={`/product/${product.slug}`}>
+                            <img
+                              src={product.images?.[0]?.image || '/placeholder-product.jpg'}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </Link>
+                          
+                          {/* Wishlist Button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Heart className="h-4 w-4" />
+                          </Button>
+
+                          {product.is_featured && (
+                            <div className="absolute top-2 left-2">
+                              <Badge className="bg-primary text-primary-foreground">
+                                Featured
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="p-4">
+                          <Link to={`/product/${product.slug}`}>
+                            <h3 className="font-semibold mb-1 hover:text-primary transition-colors line-clamp-2">
+                              {product.name}
+                            </h3>
+                          </Link>
+                          
+                          <p className="text-muted-foreground text-sm mb-2">
+                            {product.brand?.name}
+                          </p>
+                          
+                          {/* Rating */}
+                          <div className="flex items-center gap-1 mb-2">
+                            <div className="flex text-yellow-400">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? 'fill-current' : ''}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              ({product.review_count || 0})
+                            </span>
+                          </div>
+
+                          <p className="font-bold text-lg mb-3">${product.price}</p>
+
+                          {/* Action Buttons */}
+                          <div className="space-y-2">
+                            <Button 
+                              className="w-full"
+                              onClick={() => handleAddToCart(product.id, product.name)}
+                              disabled={addToCartMutation.isPending || product.stock_quantity === 0}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => handleWhatsAppClick(product)}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              Quick Buy
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <Footer />
     </div>

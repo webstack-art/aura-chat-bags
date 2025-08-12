@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MessageCircle, Menu, X, Search, ShoppingBag, User, LogOut, Package } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
 import CartDrawer from './CartDrawer';
 import AuthModal from './AuthModal';
 
@@ -15,7 +15,7 @@ const Header = () => {
   const [showCart, setShowCart] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
-  const { getCartItemCount } = useCart();
+  const { data: cartData } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
 
   const navItems = [
@@ -46,86 +46,55 @@ const Header = () => {
     }
   };
 
+  const cartItemCount = cartData?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-card">
+      {/* Main Header */}
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo - Now clickable */}
+          {/* Logo */}
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <ShoppingBag className="h-8 w-8 text-primary mr-2" />
-            <span className="text-2xl font-bold bg-gradient-luxury bg-clip-text text-transparent">
-              Aurabags
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              AuraBags
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className="text-foreground hover:text-primary transition-colors duration-300 font-medium"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.name}
               </Link>
             ))}
-            
-            {/* Customer Links Dropdown */}
-            <div className="relative group">
-              <button className="text-foreground hover:text-primary transition-colors duration-300 font-medium">
-                Help
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-md shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div className="py-2">
-                  {customerLinks.map((link) => (
-                    <Link
-                      key={link.name}
-                      to={link.href}
-                      className="block px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-primary transition-colors"
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
           </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
-            {/* Search */}
-            {showSearch ? (
-              <form onSubmit={handleSearch} className="hidden sm:flex items-center">
-                <Input
-                  type="text"
-                  placeholder="Search products, brands..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64"
-                  autoFocus
-                />
-                <Button type="submit" variant="ghost" size="icon">
-                  <Search className="h-5 w-5" />
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setShowSearch(false)}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </form>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="hidden sm:flex"
-                onClick={() => setShowSearch(true)}
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-            )}
+          <div className="flex items-center space-x-2">
+            {/* Search Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSearch(!showSearch)}
+              className="lg:hidden"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
+            {/* WhatsApp Contact */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.open('https://wa.me/1234567890', '_blank')}
+              className="text-green-600 hover:text-green-700"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
 
             {/* Cart Button */}
             <Button 
@@ -135,9 +104,9 @@ const Header = () => {
               onClick={() => setShowCart(true)}
             >
               <ShoppingBag className="h-5 w-5" />
-              {getCartItemCount() > 0 && (
+              {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                  {getCartItemCount()}
+                  {cartItemCount}
                 </span>
               )}
             </Button>
@@ -150,7 +119,7 @@ const Header = () => {
                 </Button>
                 <div className="absolute right-0 top-full mt-1 w-48 bg-background border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="p-3 border-b">
-                    <p className="font-semibold text-sm">{user?.firstName} {user?.lastName}</p>
+                    <p className="font-semibold text-sm">{user?.first_name} {user?.last_name}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <div className="p-1">
@@ -166,8 +135,11 @@ const Header = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-destructive hover:text-destructive"
-                      onClick={logout}
+                      className="w-full justify-start"
+                      onClick={() => {
+                        logout();
+                        navigate('/');
+                      }}
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout
@@ -176,27 +148,16 @@ const Header = () => {
                 </div>
               </div>
             ) : (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => setShowAuthModal(true)}
               >
-                <User className="h-4 w-4 mr-2" />
-                Sign In
+                Login
               </Button>
             )}
-            
-            <Button 
-              variant="whatsapp" 
-              size="sm"
-              className="hidden sm:flex"
-              onClick={() => window.open('https://wa.me/1234567890', '_blank')}
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chat
-            </Button>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"
               size="icon"
@@ -207,76 +168,115 @@ const Header = () => {
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-sm">
-            <nav className="flex flex-col space-y-4 py-4">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} className="px-4">
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="text"
-                    placeholder="Search products, brands..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button type="submit" variant="ghost" size="icon">
-                    <Search className="h-5 w-5" />
-                  </Button>
-                </div>
-              </form>
-              
+      {/* Desktop Search Bar */}
+      <div className="hidden lg:block border-t bg-muted/50">
+        <div className="container mx-auto px-4 py-3">
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search for bags, brands, categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Mobile Search */}
+      {showSearch && (
+        <div className="lg:hidden border-t bg-muted/50">
+          <div className="container mx-auto px-4 py-3">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background"
+                  autoFocus
+                />
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="lg:hidden border-t bg-background">
+          <nav className="container mx-auto px-4 py-6">
+            <div className="space-y-4">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className="text-foreground hover:text-primary transition-colors duration-300 font-medium px-4"
+                  className="block text-lg text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
               
-              {/* Customer Links */}
-              <div className="px-4 pt-2 border-t border-border">
-                <p className="text-sm font-semibold text-muted-foreground mb-2">Customer Support</p>
-                {customerLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    className="block text-foreground hover:text-primary transition-colors duration-300 py-1"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
+              <div className="border-t pt-4 mt-6">
+                <h3 className="font-semibold mb-3">Customer Service</h3>
+                <div className="space-y-2">
+                  {customerLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      to={link.href}
+                      className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-              
-              <div className="px-4 pt-2 border-t border-border">
-                <Button 
-                  variant="whatsapp" 
-                  className="w-full"
-                  onClick={() => window.open('https://wa.me/1234567890', '_blank')}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Chat on WhatsApp
-                </Button>
-              </div>
-            </nav>
+            </div>
+          </nav>
+        </div>
+      )}
+
+      {/* Customer Service Links */}
+      <div className="hidden lg:block border-t bg-muted/30">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex justify-center space-x-6">
+            {customerLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Cart Drawer */}
-      <CartDrawer isOpen={showCart} onClose={() => setShowCart(false)} />
+      <CartDrawer 
+        isOpen={showCart} 
+        onClose={() => setShowCart(false)} 
+      />
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
+      <AuthModal 
+        isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)}
-        onSuccess={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          // Refresh the page to update user state
+          window.location.reload();
+        }}
       />
     </header>
   );

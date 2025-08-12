@@ -1,42 +1,59 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-
-const categories = [
-  {
-    id: 1,
-    name: 'Tote Bags',
-    description: 'Spacious and sophisticated',
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop',
-    itemCount: '24 items',
-    slug: 'tote-bags'
-  },
-  {
-    id: 2,
-    name: 'Shoulder Bags',
-    description: 'Classic elegance redefined',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=400&fit=crop',
-    itemCount: '18 items',
-    slug: 'shoulder-bags'
-  },
-  {
-    id: 3,
-    name: 'Crossbody',
-    description: 'Freedom meets fashion',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
-    itemCount: '15 items',
-    slug: 'crossbody'
-  },
-  {
-    id: 4,
-    name: 'Clutches',
-    description: 'Evening sophistication',
-    image: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400&h=400&fit=crop',
-    itemCount: '12 items',
-    slug: 'clutches'
-  }
-];
+import { useQuery } from '@tanstack/react-query';
+import { categoryService } from '@/services';
 
 const FeaturedCategories = () => {
+  const { data: categories, isLoading, error } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoryService.getCategories(),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-gradient-subtle">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              Discover Our Collections
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              From everyday essentials to evening elegance, find the perfect bag for every occasion
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 aspect-square rounded-lg mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-20 bg-gradient-subtle">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              Discover Our Collections
+            </h2>
+            <p className="text-muted-foreground">Failed to load categories. Please try again later.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Filter to show only main categories (no parent)
+  const featuredCategories = categories?.filter(cat => !cat.parent)?.slice(0, 4) || [];
+
   return (
     <section className="py-20 bg-gradient-subtle">
       <div className="container mx-auto px-4">
@@ -50,43 +67,49 @@ const FeaturedCategories = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {categories.map((category) => (
+          {featuredCategories.map((category) => (
             <Link
               key={category.id}
               to={`/category/${category.slug}`}
-              className="group relative overflow-hidden rounded-2xl bg-card shadow-card hover:shadow-luxury transition-all duration-500 hover:-translate-y-2 block"
+              className="group block"
             >
-              {/* Image */}
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2 text-card-foreground group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-muted-foreground mb-3">
-                  {category.description}
-                </p>
-                <p className="text-sm text-accent font-medium mb-4">
-                  {category.itemCount}
-                </p>
+              <div className="relative overflow-hidden rounded-3xl bg-card shadow-card hover:shadow-luxury transition-all duration-500 hover:-translate-y-2">
+                {/* Category Image */}
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={category.image || '/placeholder-category.jpg'}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                </div>
                 
-                <Button 
-                  variant="outline" 
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300"
-                >
-                  Explore {category.name}
-                </Button>
+                {/* Overlay Content */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6">
+                  <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-primary transition-colors">
+                    {category.name}
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4">
+                    {category.description || 'Explore our collection'}
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    className="self-start bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white hover:text-black"
+                  >
+                    Shop Now
+                  </Button>
+                </div>
               </div>
             </Link>
           ))}
+        </div>
+
+        <div className="text-center mt-16">
+          <Link to="/categories">
+            <Button size="lg" variant="outline" className="hover:bg-primary hover:text-primary-foreground">
+              View All Categories
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
